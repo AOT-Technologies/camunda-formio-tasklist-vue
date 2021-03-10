@@ -23,7 +23,7 @@
                 <button class="cft-filter-dropbtn mr-0"><b-icon-filter-square></b-icon-filter-square></button>
                 <b-list-group  v-if="filterList && filterList.length" class="cft-filter-dropdown-content">
                 <b-list-group-item button v-for="(filter, idx) in filterList" :key="filter.id"
-                @click="fetchTaskList(filter.id); togglefilter(idx)"
+                @click="fetchTaskList(filter.id, selectSortBy, selectSortOrder); togglefilter(idx)"
                 :class="{'cft-selected': idx == activefilter}">
                     <div class="col-12">
                     {{filter.name}} ({{filter.itemCount}})
@@ -38,6 +38,10 @@
                   <input type="text" class="cft-filter" placeholder="Filter Tasks"/>
                       {{tasks.length}}
               </div>
+              <b-dropdown id="dropdown-dropup" dropup text="Drop-Up" variant="primary" class="m-2" v-if="searchList">
+                <b-dropdown-item v-for="search in searchList" :key="search.key">{{search.label}}</b-dropdown-item>
+              </b-dropdown>
+
               <b-list-group-item button v-for="(task, idx) in tasks" v-bind:key="task.id" 
                   v-on:click="toggle(idx)"
                   :class="{'cft-selected': idx == activeIndex}">
@@ -55,7 +59,7 @@
                         </div>
 
                         <div class="cft-task-details-assign font-11" >
-                              <div >
+                              <div>
                                   <span v-if="task.due">
                                     Due {{ timedifference(task.due) }},
                                 </span>
@@ -65,10 +69,10 @@
                                 <span v-if="task.created">
                                     Created {{ timedifference(task.created) }}         
                                 </span>
+                              </div> 
                                 <div title="Task assignee" >
                                  {{ task.priority }}
-                                </div>
-                              </div>      
+                                </div>     
                       </div>
                   </div>
                     </b-list-group-item>
@@ -255,6 +259,19 @@ private selectSortOrder = 'desc'
 private isAsc = false
 private filterId = ''
 
+private searchList = [
+  {key:"processDefinitionNameLike",label:"Process definition name"},
+  {key:"nameLike",label:"Task name"},
+  {key:"priority",label:"Priority"},
+  {key:"assigneeLike",label:"Assignee"},
+  {key:"descriptionLike",label:"Task Description"},
+  {key:"followUpDate",label:"Follow-up date"},
+  {key:"dueDate",label: "Due date"},
+  {key:"candidateGroup",label: "Candidate group"},
+  {key:"candidateUser",label:"Candidate User"},
+  {key:"taskVariables",label:"Task Variables"},
+  {key:"processVariables",label:"Process Variables"}];
+
 checkPropsIsPassed() {
     if(! this.bpmApiUrl|| this.bpmApiUrl===""){
         console.error("bpmApiUrl prop not Passed")
@@ -350,11 +367,13 @@ onUnClaim(){
     })
 }
 
-fetchTaskList(filterId: string) {
+fetchTaskList(filterId: string, sortBy: string, sortOrder: string) {
     this.filterId = filterId
     CamundaRest.filterTaskList(this.token, filterId, {
         "processVariables":[],"taskVariables":[],"caseInstanceVariables":[],
-        "sorting":[{"sortBy": this.selectSortBy,"sortOrder": this.selectSortOrder }],
+        // "processDefinitionNameLike":"%Service Flow access%",
+        // "nameLike": "%Modify%",
+        "sorting":[{"sortBy": sortBy,"sortOrder": sortOrder }],
         "active":true},
     this.bpmApiUrl,).then((result) => {
         this.tasks = result.data;      
@@ -373,7 +392,7 @@ toggleSort() {
 }
 
 fetchOnSorting() {
-    this.fetchTaskList(this.filterId);
+    this.fetchTaskList(this.filterId, this.selectSortBy, this.selectSortOrder);
 }
 
 updateFollowUpDate() {
@@ -474,7 +493,7 @@ created() {
     CamundaRest.filterList(this.token, this.bpmApiUrl).then((response) => {
         this.filterList = response.data;
         const key = this.findFilterKeyOfAllTask(this.filterList, "name", "All tasks")
-        this.fetchTaskList(key)
+        this.fetchTaskList(key, this.selectSortBy, this.selectSortOrder)
     });
 }
 
