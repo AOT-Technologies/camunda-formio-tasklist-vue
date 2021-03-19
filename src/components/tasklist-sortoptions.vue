@@ -7,17 +7,26 @@
 </template>
 
 <script lang="ts">
-import { Vue, Prop, Emit, Component } from 'vue-property-decorator';
+import { Component, Emit, Prop, Vue } from "vue-property-decorator";
 
 @Component
 export default class TaskSortOptions extends Vue {
     @Prop() private sortOptions !: any;
     @Prop({default: 'true'}) private showSortListDropdown !: boolean;
 
-    @Emit()
-    addSort(sort: any){
-        return sort
-    }
+  private sOptions: any = '';
+  private showDrop = false;
+
+  @Emit()
+  addSort(sort: any){
+    console.log(sort);
+    return sort
+  }
+
+  // mounted() {
+  //   this.sOptions = this.sortOptions;
+  //   this.showDrop = this.showSortListDropdown;
+  // }
 
 }
 </script>

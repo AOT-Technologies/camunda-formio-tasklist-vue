@@ -24,14 +24,11 @@
         </b-tbody>
       </b-table-simple>
 
-
-{{numPages}}
       <b-pagination-nav
+          :link-gen="linkGen"
           :number-of-pages="numPages"
           v-model="currentPage"
         />
-
-      <p> Current page is: {{currentPage}}</p>
     </div>
   </b-container>
 </template>
@@ -60,9 +57,9 @@ export default class FormList extends Vue{
     "formName",
     "Operations"
   ]
-  private perPage = 5
+  private perPage = 10
   private currentPage = 1
-  private numPages = 0
+  private numPages = 1
 
   linkGen() {
     this.formListItems();
@@ -73,13 +70,11 @@ export default class FormList extends Vue{
     const bpmUrl = localStorage.getItem('bpmApiUrl')
     CamundaRest.listForms(token, bpmUrl).then((response) =>
     {
-
+      this.numPages = Math.ceil(response.data.length/this.perPage);
       this.formList = response.data.splice(
         (this.currentPage - 1) * this.perPage,
         this.currentPage * this.perPage
       );
-      console.log(response.data.length)
-      this.numPages = Math.ceil(response.data.length/this.perPage)
     });
   }
 
