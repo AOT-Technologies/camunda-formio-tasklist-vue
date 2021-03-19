@@ -270,7 +270,7 @@
                   </div>
                 </b-tab>
                 <b-tab title="History"></b-tab>
-                <b-tab  style="height:100%;" id="diagramContainer" title="Diagram">
+                <b-tab  style="height:100%;" id="vue-bpmn-diagram-container" title="Diagram">
                   <div  style="height:100%;" id="canvas"></div>
                 </b-tab>
               </b-tabs>
@@ -798,7 +798,7 @@ export default class Tasklist extends Vue {
   handleLoading() {
     console.log("diagram loading");
   }
-  
+
   mounted() {
     this.checkPropsIsPassedAndSetValue();
     authenticateFormio(
