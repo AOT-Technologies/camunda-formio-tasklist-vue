@@ -51,3 +51,16 @@ export const decodeTokenValues = (token: any, userName: any, formIOUserRoles: an
   localStorage.setItem("UserDetails", decodeToken);
   return {userName, userEmail, formIOUserRoles};
 }
+
+export const replaceFirstElements = (filterListNames: Array<string>) => {
+    if(filterListNames[0]!=="All tasks") {
+      // filterListNames.forEach(element => element==="All tasks")
+      for(let i=0; i<filterListNames.length; i++){
+        if(filterListNames[i]==="All tasks") {
+          filterListNames[i] = filterListNames[0];
+          filterListNames[0] = "All tasks";
+        }
+      }
+    }
+    return filterListNames;
+}

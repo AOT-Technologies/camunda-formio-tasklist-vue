@@ -64,16 +64,13 @@
               >
                 <b-list-group-item
                   button
-                  v-for="(filter, idx) in filterList"
-                  :key="filter.id"
-                  @click="
-                    fetchTaskList(filter.id, payload);
-                    togglefilter(idx);
-                  "
-                  :class="{ 'cft-selected': idx == activefilter }"
+                  v-for="(filter, idx) in filterListNames"
+                  :key="filter"
+                  @click="fetchTaskFromFilter(filter);togglefilter(idx);"
+                  :class="{'cft-selected': idx==activefilter }"
                 >
                   <div class="col-12">
-                    {{ filter.name }} ({{ filter.itemCount }})
+                    {{ filter }}
                   </div>
                 </b-list-group-item>
               </b-list-group>
@@ -307,14 +304,15 @@ import {TASK_FILTER_LIST_DEFAULT_PARAM,
   decodeTokenValues,
   findFilterKeyOfAllTask,
   getTaskFromList,
+  replaceFirstElements,
   sortingList,
 } from "../services/utils";
 import BootstrapVue from "bootstrap-vue";
 import CamundaRest from "../services/camunda-rest";
 import DatePicker from "vue2-datepicker";
 import { Form } from "vue-formio";
-import TaskSortOptions from "../components/tasklist-sortoptions.vue";
 import Modeler from 'bpmn-js/lib/Modeler';
+import TaskSortOptions from "../components/tasklist-sortoptions.vue";
 import { authenticateFormio } from "../services/formio-token";
 import { getFormDetails } from "../services/get-formio";
 import moment from "moment";
@@ -369,7 +367,8 @@ export default class Tasklist extends Vue {
       },
     },
   };
-  private filterList = [];
+  private filterList: any = [];
+  private filterListNames: any = [];
   private activefilter = 0;
   private applicationId = "";
   private groupList = [];
@@ -602,16 +601,20 @@ export default class Tasklist extends Vue {
       this.numPages = Math.ceil(result.data.length / this.perPage);
     });
   }
-  numberOfPages() {
-    if (Math.ceil(this.tasks.length / this.perPage) > 1)
-      return Math.ceil(this.tasks.length / this.perPage);
-    else {
-      return 15;
-    }
+
+  fetchTaskFromFilter(filter: string){
+    Object.keys(this.filterList).forEach(key=>{
+      if(this.filterList[key]["name"] === filter) {
+        this.selectedfilterId = this.filterList[key]["id"]
+        this.fetchTaskList(this.selectedfilterId, this.payload);
+      }
+    })
   }
+
   linkGen() {
     this.fetchTaskList(this.selectedfilterId, this.payload);
   }
+
   getOptions(options: any) {
     const optionsArray: {
       sortOrder: string;
@@ -775,19 +778,27 @@ export default class Tasklist extends Vue {
   created() {
     CamundaRest.filterList(this.token, this.bpmApiUrl).then((response) => {
       this.filterList = response.data;
+      Object.keys(this.filterList).forEach(key=>{
+        this.filterListNames.push(this.filterList[key]["name"]);
+      })
+      this.filterListNames = replaceFirstElements(this.filterListNames.sort());
       const key = findFilterKeyOfAllTask(this.filterList, "name", "All tasks");
       this.fetchTaskList(key, this.payload);
     });
   }
+
   handleError() {
     console.error("failed to show diagram");
   }
+
   handleShown() {
     console.log("diagram shown");
   }
+
   handleLoading() {
     console.log("diagram loading");
   }
+  
   mounted() {
     this.checkPropsIsPassedAndSetValue();
     authenticateFormio(
@@ -808,12 +819,3 @@ export default class Tasklist extends Vue {
   }
 }
 </script>
-<style scoped>
-.vue-bpmn-diagram-container {
-  height: 100%;
-  width: 100%;
-}
-.tab-content {
-   height: 100%;
-}
-</style>
