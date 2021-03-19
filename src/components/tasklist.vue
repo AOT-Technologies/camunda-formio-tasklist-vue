@@ -1,4 +1,3 @@
-/* eslint-disable new-cap */
 <template>
   <b-container fluid class="task-outer-container">
   <b-row class="cft-service-task-list">
@@ -87,12 +86,12 @@
           <p>No tasks found in the list.</p>
       </b-row>
     </b-col>
-    <b-col  v-if="selectedTask"> <div class="service-task-details">
+    <b-col  v-if="selectedTask"> <div class="service-task-details" style="height:100%;">
       <b-row class="ml-0 task-header"> {{task.name}}</b-row>
       <b-row class="ml-0 task-name">{{taskProcess}}</b-row>
       <b-row class="ml-0" title="application-id">Application # {{ applicationId}}</b-row>
       
-      <div>
+      <div style="height:100%;">
         <b-row class="cft-actionable">
           <b-col>
           <DatePicker 
@@ -161,8 +160,8 @@
           </b-col>
         </b-row>
 
-        <div>
-          <b-tabs content-class="mt-3" v-if="showfrom">
+        <div style="height:100%;">
+          <b-tabs style="height:100%" content-class="mt-3" v-if="showfrom">
           <b-tab title="Form">
             <div  class="ml-4 mr-4">
               <b-overlay :show="task.assignee !== userName" variant="light" opacity="0.75" spinner-type="none" aria-busy="true">
@@ -177,11 +176,11 @@
               </b-overlay>
             </div>
           </b-tab>
-          <b-tab title="History"></b-tab>
-          <b-tab title="Diagram">
-            Welcome diagram
-          </b-tab>
-          </b-tabs>
+           <b-tab title="History"></b-tab>
+                <b-tab  style="height:100%;" id="diagramContainer" title="Diagram">
+                  <div  style="height:100%;" id="canvas"></div>
+                </b-tab>
+              </b-tabs>
         </div>
       </div>
       </div>   
@@ -211,6 +210,8 @@ import TaskSortOptions from '../components/tasklist-sortoptions.vue';
 import {authenticateFormio} from "../services/formio-token";
 import {getFormDetails} from "../services/get-formio";
 import moment from "moment";
+import vueBpmn from "vue-bpmn";
+import Modeler from 'bpmn-js/lib/Modeler';
 
 Vue.use(BootstrapVue)
 
@@ -219,7 +220,9 @@ Vue.use(BootstrapVue)
   components: {
     formio: Form,
     DatePicker,
-    TaskSortOptions
+    TaskSortOptions,
+	   vueBpmn,
+    Modeler
   }
 })
 export default class Tasklist extends Vue {
@@ -245,6 +248,7 @@ private task: any
 private setFollowup = null
 private setDue = null
 private setGroup = null
+private xmlData: any;
 private selectedTask = ''
 private showfrom = false
 private currentPage= 1
@@ -556,24 +560,54 @@ updateDueDate() {
 }
 
 fetchData() {
-  if (this.selectedTask) {     
-    this.task = getTaskFromList(this.tasks, this.selectedTask);
-    this.getGroupDetails()
-    CamundaRest.getTaskById(this.token, this.selectedTask, this.bpmApiUrl).then((result) => {
-      CamundaRest.getProcessDefinitionById(this.token, result.data.processDefinitionId, this.bpmApiUrl).then((res) => {
-        this.taskProcess = res.data.name;
+    if (this.selectedTask) {
+      this.task = getTaskFromList(this.tasks, this.selectedTask);
+      this.getGroupDetails();
+      CamundaRest.getTaskById(
+        this.token,
+        this.selectedTask,
+        this.bpmApiUrl
+      ).then((result) => {
+        CamundaRest.getProcessDefinitionById(
+          this.token,
+          result.data.processDefinitionId,
+          this.bpmApiUrl
+        ).then((res) => {
+          this.taskProcess = res.data.name;
+        });
+        console.log("before call");
+        CamundaRest.getProcessDiagramXML(
+          this.token,
+          result.data.processDefinitionId,
+          this.bpmApiUrl
+        ).then(async (res) => {
+          this.xmlData = res.data.bpmn20Xml;
+          const modeler = new Modeler({ container: '#canvas' });
+           await modeler.importXML(this.xmlData);
+          // const { warnings } = await viewer.importXML(this.xmlData);
+          // viewer.attachTo('#diagramContainer');
+          console.log("xml", res.data.bpmn20Xml);
+        });
       });
-    })
-    this.showfrom = false
-    CamundaRest.getVariablesByTaskId(this.token, this.selectedTask, this.bpmApiUrl).then((result)=> {
-      this.applicationId = result.data["applicationId"].value;
-      this.formioUrl = result.data["formUrl"].value;       
-      const {formioUrl, formId, submissionId} = getFormDetails(this.formioUrl, this.formIOApiUrl);
-      this.formioUrl = formioUrl; this.submissionId = submissionId; this.formId = formId
-      this.showfrom = true
-    });
+      this.showfrom = false;
+      CamundaRest.getVariablesByTaskId(
+        this.token,
+        this.selectedTask,
+        this.bpmApiUrl
+      ).then((result) => {
+        this.applicationId = result.data["applicationId"].value;
+        this.formioUrl = result.data["formUrl"].value;
+        const { formioUrl, formId, submissionId } = getFormDetails(
+          this.formioUrl,
+          this.formIOApiUrl
+        );
+        this.formioUrl = formioUrl;
+        this.submissionId = submissionId;
+        this.formId = formId;
+        this.showfrom = true;
+      });
+    }
   }
-}
 
 created() {
   CamundaRest.filterList(this.token, this.bpmApiUrl).then((response) => {
@@ -582,7 +616,15 @@ created() {
     this.fetchTaskList(key, this.payload)
   });
 }
-
+handleError() {
+    console.error("failed to show diagram");
+  }
+  handleShown() {
+    console.log("diagram shown");
+  }
+  handleLoading() {
+    console.log("diagram loading");
+  }
 mounted() {
   this.checkPropsIsPassedAndSetValue()
   authenticateFormio(this.formIOResourceId, this.formIOReviewerId, this.formIOReviewer,this.userEmail, this.formIOUserRoles)
@@ -595,3 +637,12 @@ mounted() {
 }
 }
 </script>
+<style scoped>
+.vue-bpmn-diagram-container {
+  height: 100%;
+  width: 100%;
+}
+.tab-content {
+   height: 100%;
+}
+</style>
