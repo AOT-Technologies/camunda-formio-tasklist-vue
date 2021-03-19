@@ -24,12 +24,12 @@
         </b-tbody>
       </b-table-simple>
 
-      <b-pagination
-        v-model="currentPage"
-        :total-rows="totalrows"
-        :per-page="perPage"
-        aria-controls="form-table"
-        ></b-pagination>
+
+{{numPages}}
+      <b-pagination-nav
+          :number-of-pages="numPages"
+          v-model="currentPage"
+        />
 
       <p> Current page is: {{currentPage}}</p>
     </div>
@@ -60,22 +60,31 @@ export default class FormList extends Vue{
     "formName",
     "Operations"
   ]
-  private perPage = 10
+  private perPage = 5
   private currentPage = 1
-  private formioUrl: any = ''
+  private numPages = 0
 
-  get totalrows() {
-    return this.formList.length;
+  linkGen() {
+    this.formListItems();
+  }
+
+  formListItems() {
+    const token = localStorage.getItem('authToken')
+    const bpmUrl = localStorage.getItem('bpmApiUrl')
+    CamundaRest.listForms(token, bpmUrl).then((response) =>
+    {
+
+      this.formList = response.data.splice(
+        (this.currentPage - 1) * this.perPage,
+        this.currentPage * this.perPage
+      );
+      console.log(response.data.length)
+      this.numPages = Math.ceil(response.data.length/this.perPage)
+    });
   }
 
   mounted() {
-    const token = localStorage.getItem('authToken')
-    const bpmUrl = localStorage.getItem('bpmApiUrl')
-    this.formioUrl = localStorage.getItem('formioApiUrl')
-    CamundaRest.listForms(token, bpmUrl).then((response) =>
-    {
-      this.formList = response.data;
-    });
+    this.formListItems(); 
   }
 }
 </script>
