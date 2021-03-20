@@ -7,10 +7,8 @@
         lg="4"
         md="4"
         sm="12"
-        v-if="tasks && tasks.length"
         class="cft-first"
       >
-        <b-list-group class="cft-list-container" >
           <div id='cftf-dpdown-container'>
             <div class="cftf-dpdown-box" v-for="(sort, idx) in sortList" :key="sort.sortBy">
               <div id='cftf-dpdown-container'>
@@ -24,7 +22,8 @@
                 <select
                   class="cft-selection-box"
                   aria-label="Select Sorting Options"
-                  @change="updateSort($event, idx)"
+                  v-model="selectOption[idx]"
+                  @change="updateSort(selectOption[idx], idx)"
                 >
                   <option
                     v-for="s in sortOptions"
@@ -44,7 +43,9 @@
                 <a v-else @click="toggleSort(idx)" href="#" title="Descending">
                   <i class="bi bi-chevron-down"></i>
                 </a>
-                <button v-if="updateSortOptions.length===0">
+              </div>
+              </div>
+              <button v-if="updateSortOptions.length===0">
                   <i class="bi bi-plus" @click="showSortListOptions"></i>
                 </button>
                 <TaskSortOptions
@@ -52,8 +53,6 @@
                   :showSortListDropdown="showSortListDropdown"
                   @add-sort="addSort"
                 ></TaskSortOptions>
-              </div>
-            </div>
             <div class="cft-filter-dropdown">
               <button class="cft-filter-dropbtn mr-0">
                 <i class="bi bi-filter-square" />
@@ -86,6 +85,8 @@
             <input type="text" class="cft-filter" placeholder="Filter Tasks" />
             {{ tasklength }}
           </div>
+          <b-list-group class="cft-list-container"
+           v-if="tasks && tasks.length">
           <b-list-group-item
             button
             v-for="(task, idx) in tasks"
@@ -131,17 +132,17 @@
             </div>
           </b-list-group-item>
         </b-list-group>
+        <b-list-group v-else>
+          <b-row class="cft-not-selected mt-2 ml-1 row">
+            <i class="bi bi-exclamation-circle-fill" scale="1"></i>
+            <p>No tasks found in the list.</p>
+          </b-row>
+        </b-list-group>
         <b-pagination-nav
           :link-gen="linkGen"
           :number-of-pages="numPages"
           v-model="currentPage"
         />
-      </b-col>
-      <b-col cols="4" v-else>
-        <b-row class="cft-not-selected mt-2 ml-1 row">
-          <i class="bi bi-exclamation-circle-fill" scale="1"></i>
-          <p>No tasks found in the list.</p>
-        </b-row>
       </b-col>
       <b-col v-if="selectedTask" >
         <div class="service-task-details" style="height:100%;">
@@ -382,6 +383,7 @@ export default class Tasklist extends Vue {
   private sortOptions: any = [];
   private updateSortOptions: any = [];
   private setSortOptions: any = [];
+  private selectOption: any = [];
   private showSortListDropdown = false;
   private setShowSortListDropdown = false;
   private payload: any = {
@@ -408,8 +410,8 @@ export default class Tasklist extends Vue {
     } else if (!this.formsflowaiUrl || this.formsflowaiUrl === "") {
       console.error("formsflow.ai URL prop not passed");
     }
-
-    localStorage.setItem("bpmApiUrl", this.bpmApiUrl);
+    const engine = '/engine-rest'
+    localStorage.setItem("bpmApiUrl", this.bpmApiUrl+engine);
     localStorage.setItem("authToken", this.token);
     localStorage.setItem("formsflow.ai.url", this.formsflowaiUrl);
     localStorage.setItem("formsflow.ai.api.url", this.formsflowaiApiUrl);
@@ -650,7 +652,20 @@ export default class Tasklist extends Vue {
     this.sortOptions = this.getOptions(this.sortList);
   }
 
-  updateSort(event: any, index: number) {
+  updateSort(option: any, index: number) {
+    this.selectOption[index] = option;
+    console.log(this.selectOption);
+    console.log(this.sortList);
+    console.log(sortingList);
+    
+    for(let i=0; i<sortingList.length; i++){
+      if(sortingList[i]["sortBy"]===option){
+        this.sortList[index] = sortingList[i];
+      }
+    }
+    this.sortOptions = this.getOptions(this.sortList);
+    this.payload["sorting"] = this.sortList;
+    this.fetchTaskList(this.selectedfilterId, this.payload);
     // const value = event?.target.value;
     // const label =
     //   event?.target.options[event.target.options.selectedIndex].text;
@@ -784,6 +799,7 @@ export default class Tasklist extends Vue {
       this.filterListNames = replaceFirstElements(this.filterListNames.sort());
       const key = findFilterKeyOfAllTask(this.filterList, "name", "All tasks");
       this.fetchTaskList(key, this.payload);
+      this.selectOption.push('created')
     });
   }
 
