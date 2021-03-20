@@ -142,6 +142,7 @@
           :link-gen="linkGen"
           :number-of-pages="numPages"
           v-model="currentPage"
+          class="cft-paginate"
         />
       </b-col>
       <b-col v-if="selectedTask" >
@@ -318,7 +319,6 @@ import { authenticateFormio } from "../services/formio-token";
 import { getFormDetails } from "../services/get-formio";
 import moment from "moment";
 import vueBpmn from "vue-bpmn";
-
 Vue.use(BootstrapVue);
 // Vue.use(vueBpmn);
 @Component({
@@ -341,7 +341,6 @@ export default class Tasklist extends Vue {
   @Prop() private formsflowaiUrl!: string;
   @Prop() private formIOUserRoles!: string;
   @Prop() private userName!: string;
-
   private tasks: Array<object> = [];
   private getProcessDefinitions: Array<object> = [];
   private taskProcess = null;
@@ -393,55 +392,47 @@ export default class Tasklist extends Vue {
     active: true,
     sorting: TASK_FILTER_LIST_DEFAULT_PARAM,
   };
-
   checkPropsIsPassedAndSetValue() {
     if (!this.bpmApiUrl || this.bpmApiUrl === "") {
-      console.error("bpmApiUrl prop not Passed");
-    } else if (!this.token || this.token === "") {
-      console.error("token prop not Passed");
-    } else if (!this.formIOResourceId || this.formIOResourceId === "") {
-      console.error("formIOResourceId prop not passed");
-    } else if (!this.formIOReviewerId || this.formIOReviewerId === "") {
-      console.error("formIOReviewerId prop not passed");
-    } else if (!this.formIOApiUrl || this.formIOApiUrl === "") {
-      console.error("formIOApiUrl prop not passed");
-    } else if (!this.formsflowaiApiUrl || this.formsflowaiApiUrl === "") {
-      console.error("formsflow.ai API url prop not passed");
-    } else if (!this.formsflowaiUrl || this.formsflowaiUrl === "") {
-      console.error("formsflow.ai URL prop not passed");
+      console.warn("bpmApiUrl prop not Passed");
+    } if (!this.token || this.token === "") {
+      console.warn("token prop not Passed");
+    } if (!this.formIOResourceId || this.formIOResourceId === "") {
+      console.warn("formIOResourceId prop not passed");
+    } if (!this.formIOReviewerId || this.formIOReviewerId === "") {
+      console.warn("formIOReviewerId prop not passed");
+    } if (!this.formIOApiUrl || this.formIOApiUrl === "") {
+      console.warn("formIOApiUrl prop not passed");
+    } if (!this.formsflowaiApiUrl || this.formsflowaiApiUrl === "") {
+      console.warn("formsflow.ai API url prop not passed");
+    } if (!this.formsflowaiUrl || this.formsflowaiUrl === "") {
+      console.warn("formsflow.ai URL prop not passed");
     }
     const engine = '/engine-rest'
     localStorage.setItem("bpmApiUrl", this.bpmApiUrl+engine);
     localStorage.setItem("authToken", this.token);
     localStorage.setItem("formsflow.ai.url", this.formsflowaiUrl);
     localStorage.setItem("formsflow.ai.api.url", this.formsflowaiApiUrl);
-
     const val = decodeTokenValues(this.token, this.userName, this.formIOUserRoles);
     this.userName = val.userName;this.userEmail = val.userEmail;this.formIOUserRoles = val.formIOUserRoles;
   }
-
   timedifference(date: Date) {
     return moment(date).fromNow();
   }
-
   getProcessDataFromList(processList: any[], processId: any, dataKey: string) {
     const process = processList.find((process) => process.id === processId);
     return process && process[dataKey];
   }
-
   setselectedTask(task: string) {
     this.selectedTask = task;
     this.fetchData();
   }
-
   toggle(index: number) {
     this.activeIndex = index;
   }
-
   togglefilter(index: number) {
     this.activefilter = index;
   }
-
   addGroup() {
     CamundaRest.createTaskGroupByID(this.token, this.task.id, this.bpmApiUrl, {
       userId: null,
@@ -453,7 +444,6 @@ export default class Tasklist extends Vue {
       this.reloadCurrentTask();
     });
   }
-
   getGroupDetails() {
     CamundaRest.getTaskGroupByID(this.token, this.task.id, this.bpmApiUrl).then(
       (response) => {
@@ -469,7 +459,6 @@ export default class Tasklist extends Vue {
       }
     );
   }
-
   deleteGroup(groupid: string) {
     CamundaRest.deleteTaskGroupByID(this.token, this.task.id, this.bpmApiUrl, {
       groupId: groupid,
@@ -480,14 +469,12 @@ export default class Tasklist extends Vue {
       this.reloadCurrentTask();
     });
   }
-
   onFormSubmitCallback() {
     if (this.task.id) {
       console.log("Form submitted");
       this.onBPMTaskFormSubmit(this.task.id);
     }
   }
-
   onBPMTaskFormSubmit(taskId: string) {
     const formRequestFormat = {
       variables: {
@@ -512,14 +499,12 @@ export default class Tasklist extends Vue {
         console.log("Error", error);
       });
   }
-
   getBPMTaskDetail(taskId: string) {
     CamundaRest.getTaskById(this.token, taskId, this.bpmApiUrl).then(
       (result) => {
         this.task = result.data;
       }
     );
-
     this.showfrom = false;
     CamundaRest.getVariablesByTaskId(
       this.token,
@@ -534,11 +519,9 @@ export default class Tasklist extends Vue {
       this.formioUrl = formioUrl;
       this.submissionId = submissionId;
       this.formId = formId;
-
       this.showfrom = true;
     });
   }
-
   oncustomEventCallback = (customEvent: any) => {
     switch (customEvent.type) {
     case "reloadTasks":
@@ -549,19 +532,16 @@ export default class Tasklist extends Vue {
       break;
     }
   };
-
   reloadTasks() {
     //used to unSelect the task and refresh taskList
     this.selectedTask = "";
     this.fetchTaskList(this.selectedfilterId, this.payload);
   }
-
   reloadCurrentTask() {
     //used to refresh selected task and taskList
     this.getBPMTaskDetail(this.task.id);
     this.fetchTaskList(this.selectedfilterId, this.payload);
   }
-
   onClaim() {
     CamundaRest.claim(
       this.token,
@@ -576,7 +556,6 @@ export default class Tasklist extends Vue {
         console.log("Error", error);
       });
   }
-
   onUnClaim() {
     CamundaRest.unclaim(this.token, this.task.id, this.bpmApiUrl)
       .then(() => {
@@ -586,7 +565,6 @@ export default class Tasklist extends Vue {
         console.log("Error", error);
       });
   }
-
   fetchTaskList(filterId: string, requestData: object) {
     this.selectedfilterId = filterId;
     CamundaRest.filterTaskList(
@@ -603,7 +581,6 @@ export default class Tasklist extends Vue {
       this.numPages = Math.ceil(result.data.length / this.perPage);
     });
   }
-
   fetchTaskFromFilter(filter: string){
     Object.keys(this.filterList).forEach(key=>{
       if(this.filterList[key]["name"] === filter) {
@@ -612,11 +589,9 @@ export default class Tasklist extends Vue {
       }
     })
   }
-
   linkGen() {
     this.fetchTaskList(this.selectedfilterId, this.payload);
   }
-
   getOptions(options: any) {
     const optionsArray: {
       sortOrder: string;
@@ -634,7 +609,6 @@ export default class Tasklist extends Vue {
     });
     return optionsArray;
   }
-
   addSort(sort: any){
     this.sortList.push(sort)
     this.updatesortList = this.sortList
@@ -646,12 +620,10 @@ export default class Tasklist extends Vue {
     }
     this.showSortListDropdown = false;
   }
-
   showSortListOptions() {
     this.showSortListDropdown = !this.showSortListDropdown;
     this.sortOptions = this.getOptions(this.sortList);
   }
-
   updateSort(option: any, index: number) {
     this.selectOption[index] = option;
     console.log(this.selectOption);
@@ -672,21 +644,17 @@ export default class Tasklist extends Vue {
     // this.sortList[index].sortBy = event?.target.value;
     // this.sortList[index].label =
     //   event?.target.options[event.target.options.selectedIndex].text;
-
     // this.sortOptions = this.getOptions(this.sortList);
     // this.payload["sorting"] = this.sortList;
     // this.fetchTaskList(this.selectedfilterId, this.payload);
   }
-
   deleteSort(sort: any, index: number) {
     this.sortList.splice(index, 1);
     this.updatesortList = this.sortList;
-
     this.sortOptions = this.getOptions(this.sortList);
     this.payload["sorting"] = this.sortList;
     this.fetchTaskList(this.selectedfilterId, this.payload);
   }
-
   toggleSort(index: number) {
     if (this.sortList[index].sortOrder === "asc")
       this.sortList[index].sortOrder = "desc";
@@ -696,7 +664,6 @@ export default class Tasklist extends Vue {
     this.payload["sorting"] = this.sortList;
     this.fetchTaskList(this.selectedfilterId, this.payload);
   }
-
   updateFollowUpDate() {
     const referenceobject = this.task;
     const timearr = moment(this.setFollowup)
@@ -719,7 +686,6 @@ export default class Tasklist extends Vue {
         console.log("Error", error);
       });
   }
-
   updateDueDate() {
     const referenceobject = this.task;
     const timearr = moment(this.setDue)
@@ -743,7 +709,6 @@ export default class Tasklist extends Vue {
         console.log("Error", error);
       });
   }
-
   fetchData() {
     if (this.selectedTask) {
       this.task = getTaskFromList(this.tasks, this.selectedTask);
@@ -789,7 +754,6 @@ export default class Tasklist extends Vue {
       });
     }
   }
-
   created() {
     CamundaRest.filterList(this.token, this.bpmApiUrl).then((response) => {
       this.filterList = response.data;
@@ -802,19 +766,15 @@ export default class Tasklist extends Vue {
       this.selectOption.push('created')
     });
   }
-
   handleError() {
     console.error("failed to show diagram");
   }
-
   handleShown() {
     console.log("diagram shown");
   }
-
   handleLoading() {
     console.log("diagram loading");
   }
-
   mounted() {
     this.checkPropsIsPassedAndSetValue();
     authenticateFormio(
@@ -824,7 +784,6 @@ export default class Tasklist extends Vue {
       this.userEmail,
       this.formIOUserRoles
     );
-
     this.fetchData();
     this.sortOptions = this.getOptions([]);
     CamundaRest.getProcessDefinitions(this.token, this.bpmApiUrl).then(
