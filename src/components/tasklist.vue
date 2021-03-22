@@ -54,7 +54,29 @@
                 ></TaskSortOptions>
               </div>
             </div>
-            <div class="cft-filter-dropdown">
+            
+          </div>
+          
+          <b-row>
+      <b-col
+        cols="*"
+        xl="10"
+        lg="10"
+        md="10"
+        sm="10"
+      >
+            <div class="cft-filter-container">
+            <input type="text" class="cft-filter" placeholder="Filter Tasks" />
+            {{ tasklength }}
+          </div>
+      </b-col>
+      <b-col
+        cols="*"
+        xl="2"
+        lg="2"
+        md="2"
+        sm="2"
+      ><div class="cft-filter-dropdown">
               <button class="cft-filter-dropbtn mr-0">
                 <i class="bi bi-filter-square" />
               </button>
@@ -81,11 +103,8 @@
                 </b-list-group-item>
               </b-list-group>
             </div>
-          </div>
-          <div class="cft-filter-container">
-            <input type="text" class="cft-filter" placeholder="Filter Tasks" />
-            {{ tasklength }}
-          </div>
+      </b-col>
+      </b-row>
           <b-list-group-item
             button
             v-for="(task, idx) in tasks"
